@@ -105,5 +105,7 @@ Password-based Key Derivation Function Along with salting and peppering, this al
 ### PBKDF2WithHmacSHA256
 Password-Based Key Derivation Function 2 with HMAC using SHA-256, which securely stretches a password into a cryptographic key using salt and multiple iterations.
 
+HmacSHA256 is the hashing algorithm used within PBKDF2, which strengthens passwords by adding a salt (random data) to prevent rainbow table attacks and iterating the hashing process many times (e.g. 100 000+ times) to slow down brute-force attacks.
+
 
 
