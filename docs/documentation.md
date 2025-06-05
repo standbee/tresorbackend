@@ -99,6 +99,11 @@ Another layer of security on top of salting is 'pepper'. Pepper is a random, uni
 
 
 ## Further encryption techniques
+git 
+### AES Encryption
+
+Advanced Encryption Standard (AES), is a symmetric-key, block cipher algorithm used to secure data by converting it into an unreadable format without the proper key.
+
 ### PBKDF2
 Password-based Key Derivation Function Along with salting and peppering, this algorithm can be used to further increase the security of an application's password encryption. It is a high-level algorithm that internally calls a pseudo-random function to process input (the salted, peppered password).
 
