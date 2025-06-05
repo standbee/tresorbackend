@@ -7,6 +7,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Objects;
 
 /**
  * PasswordEncryptionService
@@ -22,21 +23,9 @@ public class PasswordEncryptionService {
         this.pepper = pepper;
     }
 
-    public String hashPassword(String password) throws Exception {
-        byte[] salt = generateSalt();
-
-        String passwordWithPepper = password + pepper;
-
-        // hash password with salt and pepper
-        byte[] hashedPassword = hashWithPBKDF2(passwordWithPepper.toCharArray(), salt);
-
-        // salt and hashed password combined to store in the database
-        return Base64.getEncoder().encodeToString(salt) + ":" + Base64.getEncoder().encodeToString(hashedPassword);
-    }
-
 
     // SecureRandom to generate salt
-    private byte[] generateSalt() {
+    public byte[] generateSalt() {
         SecureRandom random = new SecureRandom();
         byte[] salt = new byte[16];
         random.nextBytes(salt);
@@ -46,9 +35,35 @@ public class PasswordEncryptionService {
     // resource: https://www.baeldung.com/java-password-hashing
     // see docs for more on hashing algorithms and practices
     // PBKDF2 for password hashing
-    private byte[] hashWithPBKDF2(char[] password, byte[] salt) throws Exception {
-        PBEKeySpec spec = new PBEKeySpec(password, salt, 10000, 256); // 256-bit hash length
-        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        return factory.generateSecret(spec).getEncoded();
+    public String hashPassword(String password, byte[] salt) {
+        // combine password with pepper
+        String passwordWithPepper = password + pepper;
+        try {
+            // hash password with salt and pepper
+            PBEKeySpec spec = new PBEKeySpec(passwordWithPepper.toCharArray(), salt, 10000, 256); // 256-bit hash length
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] hashedPassword = factory.generateSecret(spec).getEncoded();
+            // salt and pepper hashed password combined to store in the database
+            return Base64.getEncoder().encodeToString(salt) + ":" + Base64.getEncoder().encodeToString(hashedPassword);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
+
+
+    public boolean doesPasswordMatch(String loginPassword, String hashedPassword) {
+
+        String salt = hashedPassword.substring(0, hashedPassword.indexOf(":"));
+
+        try {
+            if (Objects.equals(hashPassword(loginPassword, salt.getBytes()), hashedPassword)) {
+                return true;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return false;
+    }
+
 }

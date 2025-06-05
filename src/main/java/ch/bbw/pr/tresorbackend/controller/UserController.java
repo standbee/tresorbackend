@@ -1,9 +1,6 @@
 package ch.bbw.pr.tresorbackend.controller;
 
-import ch.bbw.pr.tresorbackend.model.ConfigProperties;
-import ch.bbw.pr.tresorbackend.model.EmailAdress;
-import ch.bbw.pr.tresorbackend.model.RegisterUser;
-import ch.bbw.pr.tresorbackend.model.User;
+import ch.bbw.pr.tresorbackend.model.*;
 import ch.bbw.pr.tresorbackend.service.PasswordEncryptionService;
 import ch.bbw.pr.tresorbackend.service.UserService;
 
@@ -21,10 +18,12 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
  * UserController
+ *
  * @author Peter Rutschmann
  */
 @RestController
@@ -61,8 +60,8 @@ public class UserController {
       //input validation
       if (bindingResult.hasErrors()) {
          List<String> errors = bindingResult.getFieldErrors().stream()
-               .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
-               .collect(Collectors.toList());
+                 .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                 .collect(Collectors.toList());
          System.out.println("UserController.createUser " + errors);
 
          JsonArray arr = new JsonArray();
@@ -80,13 +79,14 @@ public class UserController {
       //todo ergänzen
       System.out.println("UserController.createUser, password validation passed");
 
+      byte[] salt = passwordService.generateSalt();
       //transform registerUser to user
       User user = new User(
             null,
             registerUser.getFirstName(),
             registerUser.getLastName(),
             registerUser.getEmail(),
-            passwordService.hashPassword(registerUser.getPassword())
+            passwordService.hashPassword(registerUser.getPassword(), salt)
             );
 
       User savedUser = userService.createUser(user);
@@ -144,8 +144,8 @@ public class UserController {
       //input validation
       if (bindingResult.hasErrors()) {
          List<String> errors = bindingResult.getFieldErrors().stream()
-               .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
-               .collect(Collectors.toList());
+                 .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                 .collect(Collectors.toList());
          System.out.println("UserController.createUser " + errors);
 
          JsonArray arr = new JsonArray();
@@ -176,6 +176,58 @@ public class UserController {
       String json = new Gson().toJson(obj);
       System.out.println("UserController.getUserIdByEmail " + json);
       return ResponseEntity.accepted().body(json);
+   }
+
+   // get user id by email
+   @CrossOrigin(origins = "${CROSS_ORIGIN}")
+   @PostMapping("/login")
+   public ResponseEntity<String> loginUser(@Valid @RequestBody LoginUser loginUser, BindingResult bindingResult) {
+
+      if (bindingResult.hasErrors()) {
+         List<String> errors = bindingResult.getFieldErrors().stream()
+                 .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                 .toList();
+         JsonArray arr = new JsonArray();
+         errors.forEach(arr::add);
+         JsonObject obj = new JsonObject();
+         obj.add("message", arr);
+         String json = new Gson().toJson(obj);
+
+         return ResponseEntity.badRequest().body(json);
+      }
+      User user = userService.findByEmail(loginUser.getEmail());
+
+//      if (user == null) {
+//         System.out.println("UserController.userLogin, no user found with email: " + loginUser.getEmail());
+//         JsonObject obj = new JsonObject();
+//         obj.addProperty("message", "No user found with this email");
+//         String json = new Gson().toJson(obj);
+//         System.out.println("UserController.userLogin, fails: " + json);
+//         return ResponseEntity.badRequest().body(json);
+//      }
+
+      if (!passwordService.doesPasswordMatch(loginUser.getPassword(), user.getPassword())) {
+         System.out.println("UserController.userLogin, password does not match");
+         JsonObject obj = new JsonObject();
+         obj.addProperty("message", "Password does not match");
+         String json = new Gson().toJson(obj);
+         System.out.println("UserController.userLogin, fails: " + json);
+         return ResponseEntity.badRequest().body(json);
+      }
+//      System.out.println("UserController.userLogin, user find by email");
+//      JsonObject obj = new JsonObject();
+//      obj.addProperty("answer", user.getId());
+//      String json = new Gson().toJson(obj);
+//      System.out.println("UserController.userLogin " + json);
+//      return ResponseEntity.accepted().body(json);
+
+      System.out.println("UserController.userLogin, user found");
+      JsonObject obj = new JsonObject();
+      obj.addProperty("answer", "User Saved");
+      String json = new Gson().toJson(obj);
+      System.out.println("UserController.userLogin " + json);
+      return ResponseEntity.accepted().body(json);
+
    }
 
 }
