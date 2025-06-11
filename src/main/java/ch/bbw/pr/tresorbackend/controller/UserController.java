@@ -80,6 +80,14 @@ public class UserController {
       System.out.println("UserController.createUser, password validation passed");
 
       byte[] salt = passwordService.generateSalt();
+
+//      User user = new User(
+//              null,
+//              "qqq",
+//              "qqq",
+//              "qqq",
+//              passwordService.hashPassword("qqq", salt)
+//      );
       //transform registerUser to user
       User user = new User(
             null,
@@ -181,7 +189,7 @@ public class UserController {
    // get user id by email
    @CrossOrigin(origins = "${CROSS_ORIGIN}")
    @PostMapping("/login")
-   public ResponseEntity<String> loginUser(@Valid @RequestBody LoginUser loginUser, BindingResult bindingResult) {
+   public ResponseEntity<String> doLoginUser(@Valid @RequestBody LoginUser loginUser, BindingResult bindingResult) {
 
       if (bindingResult.hasErrors()) {
          List<String> errors = bindingResult.getFieldErrors().stream()
@@ -197,14 +205,6 @@ public class UserController {
       }
       User user = userService.findByEmail(loginUser.getEmail());
 
-//      if (user == null) {
-//         System.out.println("UserController.userLogin, no user found with email: " + loginUser.getEmail());
-//         JsonObject obj = new JsonObject();
-//         obj.addProperty("message", "No user found with this email");
-//         String json = new Gson().toJson(obj);
-//         System.out.println("UserController.userLogin, fails: " + json);
-//         return ResponseEntity.badRequest().body(json);
-//      }
 
       if (!passwordService.doesPasswordMatch(loginUser.getPassword(), user.getPassword())) {
          System.out.println("UserController.userLogin, password does not match");
