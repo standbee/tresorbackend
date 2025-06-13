@@ -86,7 +86,14 @@ public class UserController {
       System.out.println("UserController.createUser: input validation passed");
 
       //password validation
-      //todo ergänzen
+      if (!registerUser.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d])[A-Za-z\\d\\S]{8,}$")){
+         System.out.println("UserController.createUser: Password is not valid");
+         JsonObject obj = new JsonObject();
+         obj.addProperty("message", "Password is invalid");
+         String json = new Gson().toJson(obj);
+         System.out.println("UserController.createUser, failed: " + json);
+         return ResponseEntity.badRequest().body(json);
+      }
       System.out.println("UserController.createUser, password validation passed");
 
       byte[] salt = passwordService.generateSalt();
