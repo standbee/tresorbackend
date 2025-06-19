@@ -213,7 +213,17 @@ public class UserController {
 
          return ResponseEntity.badRequest().body(json);
       }
+
       User user = userService.findByEmail(loginUser.getEmail());
+      if (user == null) {
+         System.out.println("UserController.doLoginUser, no user found with email: " + loginUser.getEmail());
+         JsonObject obj = new JsonObject();
+         obj.addProperty("message", "No user found with this email.");
+         String json = new Gson().toJson(obj);
+
+         System.out.println("UserController.doLoginUser, fails: " + json);
+         return ResponseEntity.badRequest().body(json);
+      }
 
 
       if (!passwordService.doesPasswordMatch(loginUser.getPassword(), user.getPassword())) {
